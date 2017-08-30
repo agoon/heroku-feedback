@@ -46,6 +46,14 @@ github = oauth.remote_app(
     authorize_url='https://github.com/login/oauth/authorize'
 )
 
+@app.context_processor
+def inject_logged_in():
+    return dict(logged_in=('github_token' in session))
+
+@app.context_processor
+def inject_github_org():
+    return dict(github_org=os.getenv('GITHUB_ORG'))
+
 @app.route('/')
 def home():
     return render_template('home.html')
