@@ -5,6 +5,8 @@ from github import Github
 
 import os
 import pprint
+import sys
+import traceback
 
 class GithubOAuthVarsNotDefined(Exception):
 	'''raise this if the necessary environmental vars are not defined'''
