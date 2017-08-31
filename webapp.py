@@ -1,3 +1,4 @@
+from __future__ import print_function
 from flask import Flask, redirect, url_for, session, request, jsonify, render_template, flash, Markup
 from flask_oauthlib.client import OAuth
 
@@ -62,7 +63,6 @@ def home():
 def login():
     return github.authorize(callback=url_for('authorized', _external=True, _scheme='https'))
 
-@app.route('/logout')
 def logout():
     session.clear()
     flash('You were logged out')
@@ -129,8 +129,9 @@ def authorized():
 def renderFeedback():
     user_data_pprint = '';
     g = Github(get_github_oauth_token())
-    for repo in g.get_repos():
-        if (repo.full_name[0:8].uppercase() == 'FEEDBACK'):
+    repos = g.get_user(session['user_data']['login']).get_repos()
+    for repo in repos:
+        if (repo.name[0:8].upper() == 'FEEDBACK'):
             user_data_pprint += repo.get_contents('README.md').content + '\n'
     return render_template('feedback.html',dump_user_data=user_data_pprint)
 
