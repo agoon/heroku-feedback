@@ -127,10 +127,11 @@ def authorized():
 
 @app.route('/feedback')
 def renderFeedback():
-    if 'user_data' in session:
-        user_data_pprint = pprint.pformat(session['user_data'])
-    else:
-        user_data_pprint = '';
+    user_data_pprint = '';
+    g = Github(get_github_oauth_token())
+    for repo in g.get_repos():
+        if (repo.full_name[0:8].uppercase() == 'FEEDBACK'):
+            user_data_pprint += repo.get_contents('README.md').content + '\n'
     return render_template('feedback.html',dump_user_data=user_data_pprint)
 
 
