@@ -8,6 +8,8 @@ import os
 import pprint
 import sys
 import traceback
+import base64
+import markdown
 
 class GithubOAuthVarsNotDefined(Exception):
 	'''raise this if the necessary environmental vars are not defined'''
@@ -25,6 +27,9 @@ os.getenv('GITHUB_ORG') == None):
 			APP_SECRET_KEY
 		''')
 
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 # Create Flask app
 app = Flask(__name__)
 
@@ -39,7 +44,7 @@ github = oauth.remote_app(
     'github',
     consumer_key=os.getenv('GITHUB_CLIENT_ID'),
     consumer_secret=os.getenv('GITHUB_CLIENT_SECRET'),
-    request_token_params={'scope': 'read:org'},
+    request_token_params={'scope': 'read:org, repo'},
     base_url='https://api.github.com/',
     request_token_url=None,
     access_token_method='POST',
@@ -61,8 +66,9 @@ def home():
 
 @app.route('/login')
 def login():
-    return github.authorize(callback=url_for('authorized', _external=True, _scheme='https'))
+    return github.authorize(callback=url_for('authorized', _external=True))
 
+@app.route('/logout')
 def logout():
     session.clear()
     flash('You were logged out')
@@ -127,13 +133,15 @@ def authorized():
 
 @app.route('/feedback')
 def renderFeedback():
-    user_data_pprint = '';
-    g = Github(get_github_oauth_token())
-    repos = g.get_user(session['user_data']['login']).get_repos()
+    user_feedback = []
+    g = Github(get_github_oauth_token()[0])
+    repos = g.get_organization(os.getenv('GITHUB_ORG')).get_repos()
+    named_user = g.get_user(session['user_data']['login'])
     for repo in repos:
         if (repo.name[0:8].upper() == 'FEEDBACK'):
-            user_data_pprint += repo.get_contents('README.md').content + '\n'
-    return render_template('feedback.html',dump_user_data=user_data_pprint)
+            if (repo.has_in_collaborators(named_user)):
+                user_feedback.append(Markup(markdown.markdown(base64.decodestring(repo.get_contents('README.md').content))))
+    return render_template('feedback.html',list_feedback=user_feedback)
 
 
 @github.tokengetter
