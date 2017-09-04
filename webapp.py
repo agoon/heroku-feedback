@@ -27,9 +27,6 @@ os.getenv('GITHUB_ORG') == None):
 			APP_SECRET_KEY
 		''')
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
 # Create Flask app
 app = Flask(__name__)
 
@@ -140,7 +137,7 @@ def renderFeedback():
     for repo in repos:
         if (repo.name[0:8].upper() == 'FEEDBACK'):
             if (repo.has_in_collaborators(named_user)):
-                user_feedback.append(Markup(markdown.markdown(base64.decodestring(repo.get_contents('README.md').content))))
+                user_feedback.append(Markup(markdown.markdown(bytes.decode(base64.b64decode(repo.get_contents('README.md').content)))))
     return render_template('feedback.html',list_feedback=user_feedback)
 
 
