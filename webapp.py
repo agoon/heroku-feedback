@@ -51,7 +51,7 @@ github = oauth.remote_app(
 
 @app.context_processor
 def inject_logged_in():
-    return dict(logged_in=('github_token' in session))
+    return dict(logged_in=logged_in())
 
 @app.context_processor
 def inject_github_org():
@@ -130,6 +130,9 @@ def authorized():
 
 @app.route('/feedback')
 def renderFeedback():
+    if not logged_in():
+        flash('You must be logged in to do that', 'error')
+        return redirect(url_for('home'))
     user_feedback = []
     g = Github(get_github_oauth_token()[0])
     repos = g.get_organization(os.getenv('GITHUB_ORG')).get_repos()
@@ -145,6 +148,9 @@ def renderFeedback():
 def get_github_oauth_token():
     return session.get('github_token')
 
+# Checks if token is in session, which means that the user is logged in
+def logged_in():
+    return 'github_token' in session
 
 if __name__ == '__main__':
     app.run()
